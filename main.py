@@ -29,6 +29,8 @@ dp.include_router(router)
 
 app = FastAPI(docs_url=None, redoc_url=None)
 
+@app.get("/")
+@app.get("/kaithhealthcheck")
 @app.get("/kaithheathcheck")          
 def health():                                 
     return {"status": "ok"}
@@ -51,7 +53,3 @@ async def on_shutdown():
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.session.close()
   
-# ---------- health-check required by Leapcell ----------
-@app.get("/kaithheathcheck")          
-def health():
-    return {"status": "ok"}
