@@ -7,6 +7,6 @@ router = Router()
 async def start(message: types.Message):
     await message.answer("Hi! I echo everything you say.")
 
-@router.message()            
+@router.message()
 async def echo(message: types.Message):
-    await message.send_copy_to(message.chat.id)
+    await message.send_copy(chat_id=message.chat.id)
