@@ -17,7 +17,7 @@ app = FastAPI(docs_url=None, redoc_url=None)
 
 @app.get("/kaithheathcheck")          
 def health():                                 
-    return {"status": "ok"
+    return {"status": "ok"}
 
 # ---------- 2.  Telegram posts to /  (because WEBHOOK_URL has no path) ----------
 
