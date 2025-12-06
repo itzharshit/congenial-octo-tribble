@@ -5,6 +5,20 @@ from bot import router
 from aiogram.types import Update
 
 from datetime import datetime
+import aiohttp   # add at top
+
+async def keep_alive():
+    url = f"{WEBHOOK_URL}/kaithheathcheck"
+    while True:
+        await asyncio.sleep(300)
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    logging.info(f"Ping at {datetime.now()}: {resp.status}")
+        except Exception as e:
+            logging.error(f"Keep-alive failed: {e}")
+
+
 
 BOT_TOKEN   = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")          # full https://... (no path)
@@ -41,15 +55,3 @@ async def on_shutdown():
 @app.get("/kaithheathcheck")          
 def health():
     return {"status": "ok"}
-
-# ---------- keep-alive task ----------
-async def keep_alive():
-    health_url = f"{WEBHOOK_URL}/kaithheathcheck"
-    while True:
-        await asyncio.sleep(300)          # 5 minutes
-        try:
-            async with bot.session.get(health_url) as resp:
-                logging.info(f"Ping at {datetime.now()}: {resp.status}")
-        except Exception as e:
-            logging.error(f"Keep-alive failed: {e}")
-
