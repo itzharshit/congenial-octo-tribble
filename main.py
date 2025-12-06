@@ -37,3 +37,9 @@ async def on_startup():
 async def on_shutdown():
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.session.close()
+
+# ---------- health-check required by Leapcell ----------
+@app.get("/kaithheathcheck")          # MUST be exactly this path
+def health():
+    return {"status": "ok"}
+
