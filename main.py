@@ -19,9 +19,14 @@ def health():                         #                ├─ do NOT change
     return {"status": "ok"}           #                ┘
 
 # ---------- 2.  Telegram posts to /  (because WEBHOOK_URL has no path) ----------
+
+from aiogram.types import Update   # add this import at the top
+
 @app.post("/")
 async def telegram(update: dict):
-    await dp.feed_update(bot, update)
+    await dp.feed_update(bot, Update(**update))
+
+
 
 # ---------- startup / shutdown ----------
 @app.on_event("startup")
