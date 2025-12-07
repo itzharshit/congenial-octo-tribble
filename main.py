@@ -7,17 +7,33 @@ from aiogram.types import Update
 from datetime import datetime
 import aiohttp   # add at top
 
+import ssl
+
 async def keep_alive():
-    url = f"{WEBHOOK_URL}/kaithheathcheck"
+    base_url = WEBHOOK_URL.rstrip('/')
+    url = f"{base_url}/kaithheathcheck}"
+    
+    # Create SSL context that's more permissive
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    
+    connector = aiohttp.TCPConnector(ssl=ssl_context)
+    
     while True:
         await asyncio.sleep(29)
         try:
-            async with aiohttp.ClientSession() as session:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(
+                timeout=timeout, 
+                connector=connector
+            ) as session:
                 async with session.get(url) as resp:
                     logging.info(f"Ping at {datetime.now()}: {resp.status}")
+        except asyncio.TimeoutError:
+            logging.error(f"Keep-alive timeout for {url}")
         except Exception as e:
             logging.error(f"Keep-alive failed: {e}")
-
 
 
 BOT_TOKEN   = os.getenv("BOT_TOKEN")
