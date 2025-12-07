@@ -5,39 +5,7 @@ from bot import router
 from aiogram.types import Update
 
 from datetime import datetime
-import aiohttp   # add at top
-
-import ssl
-
-
-async def keep_alive():
-    # Ensure URL ends with /
-    if not WEBHOOK_URL.endswith('/'):
-        url = WEBHOOK_URL + '/'
-    else:
-        url = WEBHOOK_URL
-    
-    # Create SSL context that's more permissive
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    
-    connector = aiohttp.TCPConnector(ssl=ssl_context)
-    
-    while True:
-        await asyncio.sleep(29)
-        try:
-            timeout = aiohttp.ClientTimeout(total=10)
-            async with aiohttp.ClientSession(
-                timeout=timeout, 
-                connector=connector
-            ) as session:
-                async with session.get(url) as resp:
-                    logging.info(f"Ping at {datetime.now()}: {resp.status}")
-        except asyncio.TimeoutError:
-            logging.error(f"Keep-alive timeout for {url}")
-        except Exception as e:
-            logging.error(f"Keep-alive failed: {e}")
+import aiohttp
 
 BOT_TOKEN   = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")          # full https://... (no path)
@@ -60,15 +28,40 @@ def health():
 async def telegram(update: dict):
     await dp.feed_update(bot, Update(**update))
 
+# ---------- keep-alive function ----------
+async def keep_alive():
+    # Clean the URL - remove trailing slash if present
+    url = WEBHOOK_URL.rstrip('/')
+    
+    while True:
+        await asyncio.sleep(26)  # Ping every 26 seconds (less than 30s idle timeout)
+        try:
+            # Simple request with short timeout and no SSL verification
+            async with aiohttp.ClientSession() as session:
+                # 4 second timeout is plenty for a simple GET request
+                async with session.get(url, timeout=4, ssl=False) as resp:
+                    if resp.status == 200:
+                        logging.debug(f"Keep-alive success at {datetime.now()}")
+                    else:
+                        logging.debug(f"Keep-alive status {resp.status} at {datetime.now()}")
+        except asyncio.TimeoutError:
+            # Timeouts happen occasionally, not an error
+            logging.debug(f"Keep-alive timeout at {datetime.now()} (expected)")
+        except Exception as e:
+            # Any other error - log at debug level, not error
+            logging.debug(f"Keep-alive attempt failed: {type(e).__name__}")
+
 # ---------- startup / shutdown ----------
 @app.on_event("startup")
 async def on_startup():
     await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
     logging.warning(f"Webhook set to {WEBHOOK_URL}")
+    
+    # Start keep-alive as a background task
     asyncio.create_task(keep_alive())
+    logging.info("Keep-alive task started (pinging every 26 seconds)")
     
 @app.on_event("shutdown")
 async def on_shutdown():
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.session.close()
-  
