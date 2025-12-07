@@ -9,9 +9,13 @@ import aiohttp   # add at top
 
 import ssl
 
+
 async def keep_alive():
-    base_url = WEBHOOK_URL.rstrip('/')
-    url = f"{base_url}/kaithheathcheck}"
+    # Ensure URL ends with /
+    if not WEBHOOK_URL.endswith('/'):
+        url = WEBHOOK_URL + '/'
+    else:
+        url = WEBHOOK_URL
     
     # Create SSL context that's more permissive
     ssl_context = ssl.create_default_context()
@@ -34,7 +38,6 @@ async def keep_alive():
             logging.error(f"Keep-alive timeout for {url}")
         except Exception as e:
             logging.error(f"Keep-alive failed: {e}")
-
 
 BOT_TOKEN   = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")          # full https://... (no path)
