@@ -10,7 +10,7 @@ import aiohttp   # add at top
 async def keep_alive():
     url = f"{WEBHOOK_URL}/kaithheathcheck"
     while True:
-        await asyncio.sleep(300)
+        await asyncio.sleep(29)
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as resp:
